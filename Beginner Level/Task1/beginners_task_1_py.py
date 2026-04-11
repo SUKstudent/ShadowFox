@@ -61,18 +61,18 @@ validation_generator = datagen.flow_from_directory('/content/horses_or_humans/tr
                                                    class_mode='binary',subset='validation')
 
 model = Sequential()
-model.add(Conv2D(64,kernel_size=3,activation='relu',input_shape=(150,150,3)))
+model.add(Conv2D(32,kernel_size=3,activation='relu',input_shape=(150,150,3)))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(BatchNormalization())
 model.add(Dropout(0.2))#1st layer
 
-model.add(Conv2D(128,kernel_size=3,activation='relu'))
+model.add(Conv2D(64,kernel_size=3,activation='relu'))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(BatchNormalization())
 model.add(Dropout(0.2))#2nd layer
 
 #3rd Layer CNN
-model.add(Conv2D(256,kernel_size=3,activation='relu'))
+model.add(Conv2D(128,kernel_size=3,activation='relu'))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(BatchNormalization())
 model.add(Dropout(0.2))
@@ -130,7 +130,7 @@ from PIL import Image
 from tensorflow.keras.preprocessing import image
 
 # 🔹 Provide a direct image URL
-img_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQGo2b2lkeRSepWCPr7CIYjv_9AlZwZo-Okg&s"
+img_url = "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aG9yc2VzfGVufDB8fDB8fHww"
 img = Image.open(requests.get(img_url, stream=True).raw).convert("RGB").resize((150, 150))
 
 # 🔹 Convert to array
@@ -160,7 +160,7 @@ from PIL import Image
 from tensorflow.keras.preprocessing import image
 
 # 🔹 Provide a direct image URL
-img_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhQ2L8P5B4PjGv1W3l0d0q8sY1t6h2s6X1fQ&s"
+img_url = "https://i.pinimg.com/736x/df/bd/39/dfbd397c1f13e66ccae6a669ea9c1691.jpg"
 # 🔹 Load and resize image
 img = Image.open(requests.get(img_url, stream=True).raw).convert("RGB").resize((150, 150))
 
