@@ -1,4 +1,4 @@
-```python
+#python
 # ============================================
 # 📌 IMAGE CLASSIFICATION WEB APP (STREAMLIT)
 # ============================================
@@ -212,4 +212,3 @@ st.sidebar.write("""
 st.write("---")
 
 st.caption("⚡ Built with Streamlit & TensorFlow")
-```
