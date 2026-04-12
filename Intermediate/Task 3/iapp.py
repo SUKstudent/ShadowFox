@@ -1,23 +1,31 @@
 import streamlit as st
 import joblib
 import numpy as np
+import os
 
-# Load model
-model = joblib.load("Intermediate/Task 3/loan_predictor.pkl")
+# ---------------- LOAD MODEL (SAFE PATH) ----------------
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "loan_predictor.pkl")
+model = joblib.load(MODEL_PATH)
+
+# ---------------- APP UI ----------------
+st.set_page_config(page_title="Loan Prediction App", layout="centered")
 
 st.title("🏦 Loan Approval Prediction App")
+st.write("Fill in the details below to check loan approval status")
 
+# ---------------- SIDEBAR NAVIGATION ----------------
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Home", "Predict", "About"])
 
 # ---------------- HOME ----------------
 if page == "Home":
-    st.write("Welcome to Loan Prediction App 🚀")
+    st.image("https://img.icons8.com/color/480/bank-building.png", width=200)
+    st.write("Welcome to Loan Approval Prediction System 🚀")
 
-# ---------------- PREDICT ----------------
+# ---------------- PREDICTION ----------------
 elif page == "Predict":
 
-    st.subheader("Enter Customer Details")
+    st.subheader("Enter Applicant Details")
 
     gender = st.selectbox("Gender", ["Male", "Female"])
     married = st.selectbox("Married", ["Yes", "No"])
@@ -25,10 +33,10 @@ elif page == "Predict":
     education = st.selectbox("Education", ["Graduate", "Not Graduate"])
     self_employed = st.selectbox("Self Employed", ["Yes", "No"])
 
-    applicant_income = st.number_input("Applicant Income")
-    coapplicant_income = st.number_input("Coapplicant Income")
-    loan_amount = st.number_input("Loan Amount")
-    loan_term = st.number_input("Loan Amount Term")
+    applicant_income = st.number_input("Applicant Income", min_value=0)
+    coapplicant_income = st.number_input("Coapplicant Income", min_value=0)
+    loan_amount = st.number_input("Loan Amount", min_value=0)
+    loan_term = st.number_input("Loan Amount Term", min_value=0)
     credit_history = st.selectbox("Credit History", [1.0, 0.0])
     property_area = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
 
@@ -45,7 +53,7 @@ elif page == "Predict":
 
     property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-    # ---------------- FEATURE ARRAY (FIXED ORDER) ----------------
+    # ---------------- FEATURE ARRAY ----------------
     features = np.array([[
         gender,
         married,
@@ -60,7 +68,15 @@ elif page == "Predict":
         property_area
     ]])
 
-    st.write("Feature shape:", features.shape)
+    # ---------------- SAFETY CHECK ----------------
+    if features.shape[1] != model.n_features_in_:
+        st.error(f"""
+        ❌ Feature mismatch error!
+        
+        Model expects: {model.n_features_in_} features  
+        You provided: {features.shape[1]} features
+        """)
+        st.stop()
 
     # ---------------- PREDICTION ----------------
     if st.button("Predict Loan Status"):
@@ -73,4 +89,12 @@ elif page == "Predict":
 
 # ---------------- ABOUT ----------------
 elif page == "About":
-    st.write("ML Loan Prediction App using Streamlit 🚀")
+    st.write("""
+    ### 🏦 Loan Prediction App  
+    Built using:
+    - Streamlit
+    - Machine Learning (Scikit-learn)
+    - Python
+
+    This app predicts loan approval based on applicant details.
+    """)
