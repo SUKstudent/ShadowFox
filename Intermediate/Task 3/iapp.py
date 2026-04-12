@@ -7,56 +7,27 @@ import os
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "loan_predictor.pkl")
 model = joblib.load(MODEL_PATH)
 
-# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Loan Prediction App", layout="centered")
 
-# ---------------- TITLE ----------------
 st.title("🏦 Loan Approval Prediction System")
 
-# ---------------- NAVIGATION ----------------
 page = st.sidebar.radio("Navigation", ["Home", "Predict", "About"])
 
-# ================= HOME =================
+# ---------------- HOME ----------------
 if page == "Home":
-    st.markdown("## 🏠 Welcome to Loan Prediction App")
-    st.write("""
-    This application helps predict whether a loan will be approved or rejected
-    based on applicant details.
+    st.markdown("## 🏠 Welcome")
+    st.write("Predict loan approval using ML model.")
 
-    👉 Navigate to **Predict** to check loan status  
-    👉 Go to **About** to know more about the project
-    """)
-
-    st.image("https://img.icons8.com/color/480/bank-building.png", width=200)
-
-# ================= ABOUT =================
+# ---------------- ABOUT ----------------
 elif page == "About":
-    st.markdown("## ℹ️ About This App")
+    st.markdown("## ℹ About")
+    st.write("Built using Streamlit + Machine Learning")
 
-    st.write("""
-    ### 🏦 Loan Prediction System
-
-    This machine learning app predicts loan approval status using:
-    - Applicant details
-    - Financial information
-    - Credit history
-
-    ### 🧠 Tech Stack:
-    - Python
-    - Streamlit
-    - Scikit-learn
-    - Joblib
-
-    ### 🎯 Goal:
-    Help banks automate loan approval decisions.
-    """)
-
-# ================= PREDICT =================
+# ---------------- PREDICT ----------------
 elif page == "Predict":
 
-    st.markdown("## 📊 Enter Applicant Details")
+    st.subheader("Enter Details")
 
-    # ---------------- INPUTS ----------------
     gender = st.selectbox("Gender", ["Male", "Female"])
     married = st.selectbox("Married", ["Yes", "No"])
     dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
@@ -76,14 +47,11 @@ elif page == "Predict":
     education = 1 if education == "Graduate" else 0
     self_employed = 1 if self_employed == "Yes" else 0
 
-    if dependents == "3+":
-        dependents = 3
-    else:
-        dependents = int(dependents)
+    dependents = 3 if dependents == "3+" else int(dependents)
 
     property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-    # ---------------- FEATURES (11 ONLY) ----------------
+    # ---------------- FINAL FEATURES (11 ONLY) ----------------
     features = np.array([[
         gender,
         married,
@@ -105,6 +73,8 @@ elif page == "Predict":
 
 Model expects: {model.n_features_in_}  
 You provided: {features.shape[1]}
+
+👉 Fix: model and app must match training data exactly.
 """)
         st.stop()
 
