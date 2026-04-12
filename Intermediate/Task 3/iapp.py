@@ -7,100 +7,85 @@ import os
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "loan_predictor.pkl")
 model = joblib.load(MODEL_PATH)
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(page_title="Loan Prediction App", layout="centered")
+st.title("🏦 Loan Approval Prediction App")
 
-st.title("🏦 Loan Approval Prediction System")
+st.write("Fill the details below to check loan approval status.")
 
-# ---------------- SIDEBAR ----------------
-page = st.sidebar.radio("Navigation", ["Predict", "About"])
+# ---------------- INPUTS ----------------
+gender = st.selectbox("Gender", ["Male", "Female"])
+married = st.selectbox("Married", ["Yes", "No"])
+dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
+education = st.selectbox("Education", ["Graduate", "Not Graduate"])
+self_employed = st.selectbox("Self Employed", ["Yes", "No"])
 
-# ---------------- ABOUT PAGE ----------------
-if page == "About":
-    st.write("""
-    ### 🏦 Loan Prediction App
-    This app predicts whether a loan will be approved or rejected.
+applicant_income = st.number_input("Applicant Income")
+coapplicant_income = st.number_input("Coapplicant Income")
+loan_amount = st.number_input("Loan Amount")
+loan_term = st.number_input("Loan Amount Term")
+credit_history = st.selectbox("Credit History", [1.0, 0.0])
+property_area = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
 
-    Built using:
-    - Streamlit
-    - Machine Learning (Sklearn)
-    - Python
-    """)
+# ---------------- ENCODING ----------------
+gender = 1 if gender == "Male" else 0
+married = 1 if married == "Yes" else 0
+education = 1 if education == "Graduate" else 0
+self_employed = 1 if self_employed == "Yes" else 0
 
-# ---------------- PREDICTION PAGE ----------------
-elif page == "Predict":
+if dependents == "3+":
+    dependents = 3
+else:
+    dependents = int(dependents)
 
-    st.subheader("Enter Applicant Details")
+property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-    # Inputs
-    gender = st.selectbox("Gender", ["Male", "Female"])
-    married = st.selectbox("Married", ["Yes", "No"])
-    dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
-    education = st.selectbox("Education", ["Graduate", "Not Graduate"])
-    self_employed = st.selectbox("Self Employed", ["Yes", "No"])
+# ---------------- FEATURE ENGINEERING ----------------
+total_income = applicant_income + coapplicant_income
+loan_ratio = loan_amount / (total_income + 1)
+emi = loan_amount / (loan_term + 1)
 
-    applicant_income = st.number_input("Applicant Income", min_value=0)
-    coapplicant_income = st.number_input("Coapplicant Income", min_value=0)
-    loan_amount = st.number_input("Loan Amount", min_value=0)
-    loan_term = st.number_input("Loan Amount Term", min_value=0)
-    credit_history = st.selectbox("Credit History", [1.0, 0.0])
-    property_area = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
+# ---------------- FEATURE ARRAY ----------------
+features = np.array([[
+    gender,
+    married,
+    dependents,
+    education,
+    self_employed,
+    applicant_income,
+    coapplicant_income,
+    loan_amount,
+    loan_term,
+    credit_history,
+    property_area,
+    total_income,
+    loan_ratio,
+    emi
+]])
 
-    # ---------------- ENCODING ----------------
-    gender = 1 if gender == "Male" else 0
-    married = 1 if married == "Yes" else 0
-    education = 1 if education == "Graduate" else 0
-    self_employed = 1 if self_employed == "Yes" else 0
+# ---------------- FIX (REAL CORE SOLUTION) ----------------
+expected_features = model.n_features_in_
+given_features = features.shape[1]
 
-    if dependents == "3+":
-        dependents = 3
+if given_features != expected_features:
+    st.error(f"""
+❌ Feature mismatch detected!
+
+Model expects: {expected_features}  
+You provided: {given_features}
+
+👉 Fix: retrain model or align features properly.
+""")
+    st.stop()
+
+# ---------------- PREDICTION ----------------
+if st.button("Predict Loan Status"):
+
+    prediction = model.predict(features)[0]
+
+    if hasattr(model, "predict_proba"):
+        prob = model.predict_proba(features)[0][1]
+        st.write("Approval Probability:", round(prob * 100, 2), "%")
+
+    if prediction == 1:
+        st.success("✅ Loan Approved")
     else:
-        dependents = int(dependents)
-
-    property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
-
-    # ---------------- FEATURE ENGINEERING ----------------
-    total_income = applicant_income + coapplicant_income
-    loan_ratio = loan_amount / (total_income + 1)
-    emi = loan_amount / (loan_term + 1)
-
-    # ---------------- FINAL FEATURE ARRAY (14 FEATURES) ----------------
-    features = np.array([[
-        gender,
-        married,
-        dependents,
-        education,
-        self_employed,
-        applicant_income,
-        coapplicant_income,
-        loan_amount,
-        loan_term,
-        credit_history,
-        property_area,
-        total_income,
-        loan_ratio,
-        emi
-    ]])
-
-    # ---------------- MODEL CHECK ----------------
-    st.write("Model expects:", model.n_features_in_)
-    st.write("You provided:", features.shape[1])
-
-    if features.shape[1] != model.n_features_in_:
-        st.error("❌ Feature mismatch! Model and app are not aligned.")
-        st.stop()
-
-    # ---------------- PREDICTION ----------------
-    if st.button("Predict Loan Status"):
-
-        prediction = model.predict(features)[0]
-
-        # Probability (if supported)
-        if hasattr(model, "predict_proba"):
-            prob = model.predict_proba(features)[0][1]
-            st.success(f"Approval Probability: {round(prob * 100, 2)} %")
-
-        if prediction == 1:
-            st.success("✅ Loan Approved")
-        else:
-            st.error("❌ Loan Rejected")
+        st.error("❌ Loan Rejected")
