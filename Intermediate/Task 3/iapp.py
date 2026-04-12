@@ -7,20 +7,32 @@ import os
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "loan_predictor.pkl")
 model = joblib.load(MODEL_PATH)
 
-st.title("🏦 Loan Approval Prediction App")
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(page_title="Loan Prediction App", layout="centered")
 
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Predict", "About"])
+st.title("🏦 Loan Approval Prediction System")
 
-# ---------------- ABOUT ----------------
+# ---------------- SIDEBAR ----------------
+page = st.sidebar.radio("Navigation", ["Predict", "About"])
+
+# ---------------- ABOUT PAGE ----------------
 if page == "About":
-    st.write("ML Loan Prediction App 🚀 built using Streamlit")
+    st.write("""
+    ### 🏦 Loan Prediction App
+    This app predicts whether a loan will be approved or rejected.
 
-# ---------------- PREDICTION ----------------
+    Built using:
+    - Streamlit
+    - Machine Learning (Sklearn)
+    - Python
+    """)
+
+# ---------------- PREDICTION PAGE ----------------
 elif page == "Predict":
 
-    st.subheader("Enter Details")
+    st.subheader("Enter Applicant Details")
 
+    # Inputs
     gender = st.selectbox("Gender", ["Male", "Female"])
     married = st.selectbox("Married", ["Yes", "No"])
     dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
@@ -40,15 +52,19 @@ elif page == "Predict":
     education = 1 if education == "Graduate" else 0
     self_employed = 1 if self_employed == "Yes" else 0
 
-    dependents = 3 if dependents == "3+" else int(dependents)
+    if dependents == "3+":
+        dependents = 3
+    else:
+        dependents = int(dependents)
+
     property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
     # ---------------- FEATURE ENGINEERING ----------------
     total_income = applicant_income + coapplicant_income
-    loan_income_ratio = loan_amount / (total_income + 1)
+    loan_ratio = loan_amount / (total_income + 1)
     emi = loan_amount / (loan_term + 1)
 
-    # ---------------- CREATE INPUT ----------------
+    # ---------------- FINAL FEATURE ARRAY (14 FEATURES) ----------------
     features = np.array([[
         gender,
         married,
@@ -62,29 +78,27 @@ elif page == "Predict":
         credit_history,
         property_area,
         total_income,
-        loan_income_ratio,
+        loan_ratio,
         emi
     ]])
 
-    # ---------------- AUTO SAFETY FIX ----------------
-    expected = model.n_features_in_
-    actual = features.shape[1]
+    # ---------------- MODEL CHECK ----------------
+    st.write("Model expects:", model.n_features_in_)
+    st.write("You provided:", features.shape[1])
 
-    st.write("Expected features:", expected)
-    st.write("Given features:", actual)
-
-    # 🔥 FIX: adjust automatically if mismatch
-    if actual != expected:
-        st.warning("Adjusting features automatically to match model...")
-
-        if actual > expected:
-            features = features[:, :expected]  # trim extra
-        else:
-            features = np.pad(features, ((0,0),(0, expected-actual)), 'constant')
+    if features.shape[1] != model.n_features_in_:
+        st.error("❌ Feature mismatch! Model and app are not aligned.")
+        st.stop()
 
     # ---------------- PREDICTION ----------------
     if st.button("Predict Loan Status"):
+
         prediction = model.predict(features)[0]
+
+        # Probability (if supported)
+        if hasattr(model, "predict_proba"):
+            prob = model.predict_proba(features)[0][1]
+            st.success(f"Approval Probability: {round(prob * 100, 2)} %")
 
         if prediction == 1:
             st.success("✅ Loan Approved")
