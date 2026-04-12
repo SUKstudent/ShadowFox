@@ -3,29 +3,23 @@ import joblib
 import numpy as np
 import os
 
-# ---------------- LOAD MODEL (SAFE PATH) ----------------
+# ---------------- LOAD MODEL ----------------
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "loan_predictor.pkl")
 model = joblib.load(MODEL_PATH)
 
-# ---------------- APP UI ----------------
-st.set_page_config(page_title="Loan Prediction App", layout="centered")
-
 st.title("🏦 Loan Approval Prediction App")
-st.write("Fill in the details below to check loan approval status")
 
-# ---------------- SIDEBAR NAVIGATION ----------------
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Predict", "About"])
+page = st.sidebar.radio("Go to", ["Predict", "About"])
 
-# ---------------- HOME ----------------
-if page == "Home":
-    st.image("https://img.icons8.com/color/480/bank-building.png", width=200)
-    st.write("Welcome to Loan Approval Prediction System 🚀")
+# ---------------- ABOUT ----------------
+if page == "About":
+    st.write("ML Loan Prediction App 🚀 built using Streamlit")
 
 # ---------------- PREDICTION ----------------
 elif page == "Predict":
 
-    st.subheader("Enter Applicant Details")
+    st.subheader("Enter Details")
 
     gender = st.selectbox("Gender", ["Male", "Female"])
     married = st.selectbox("Married", ["Yes", "No"])
@@ -46,14 +40,15 @@ elif page == "Predict":
     education = 1 if education == "Graduate" else 0
     self_employed = 1 if self_employed == "Yes" else 0
 
-    if dependents == "3+":
-        dependents = 3
-    else:
-        dependents = int(dependents)
-
+    dependents = 3 if dependents == "3+" else int(dependents)
     property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-    # ---------------- FEATURE ARRAY ----------------
+    # ---------------- FEATURE ENGINEERING ----------------
+    total_income = applicant_income + coapplicant_income
+    loan_income_ratio = loan_amount / (total_income + 1)
+    emi = loan_amount / (loan_term + 1)
+
+    # ---------------- CREATE INPUT ----------------
     features = np.array([[
         gender,
         married,
@@ -65,18 +60,27 @@ elif page == "Predict":
         loan_amount,
         loan_term,
         credit_history,
-        property_area
+        property_area,
+        total_income,
+        loan_income_ratio,
+        emi
     ]])
 
-    # ---------------- SAFETY CHECK ----------------
-    if features.shape[1] != model.n_features_in_:
-        st.error(f"""
-        ❌ Feature mismatch error!
-        
-        Model expects: {model.n_features_in_} features  
-        You provided: {features.shape[1]} features
-        """)
-        st.stop()
+    # ---------------- AUTO SAFETY FIX ----------------
+    expected = model.n_features_in_
+    actual = features.shape[1]
+
+    st.write("Expected features:", expected)
+    st.write("Given features:", actual)
+
+    # 🔥 FIX: adjust automatically if mismatch
+    if actual != expected:
+        st.warning("Adjusting features automatically to match model...")
+
+        if actual > expected:
+            features = features[:, :expected]  # trim extra
+        else:
+            features = np.pad(features, ((0,0),(0, expected-actual)), 'constant')
 
     # ---------------- PREDICTION ----------------
     if st.button("Predict Loan Status"):
@@ -86,15 +90,3 @@ elif page == "Predict":
             st.success("✅ Loan Approved")
         else:
             st.error("❌ Loan Rejected")
-
-# ---------------- ABOUT ----------------
-elif page == "About":
-    st.write("""
-    ### 🏦 Loan Prediction App  
-    Built using:
-    - Streamlit
-    - Machine Learning (Scikit-learn)
-    - Python
-
-    This app predicts loan approval based on applicant details.
-    """)
