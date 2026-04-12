@@ -15,24 +15,24 @@ st.title("🏦 Loan Approval Prediction System")
 # ---------------- SIDEBAR ----------------
 page = st.sidebar.radio("Navigation", ["Predict", "About"])
 
-# ---------------- ABOUT ----------------
+# ---------------- ABOUT PAGE ----------------
 if page == "About":
     st.write("""
     ### 🏦 Loan Prediction App
-    Predict loan approval using ML model.
+    This app predicts whether a loan will be approved or rejected.
 
-    Built with:
+    Built using:
     - Streamlit
-    - Scikit-learn
+    - Machine Learning (Sklearn)
     - Python
     """)
 
-# ---------------- PREDICT ----------------
+# ---------------- PREDICT PAGE ----------------
 elif page == "Predict":
 
     st.subheader("Enter Applicant Details")
 
-    # Inputs
+    # ---------------- INPUTS ----------------
     gender = st.selectbox("Gender", ["Male", "Female"])
     married = st.selectbox("Married", ["Yes", "No"])
     dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
@@ -52,11 +52,14 @@ elif page == "Predict":
     education = 1 if education == "Graduate" else 0
     self_employed = 1 if self_employed == "Yes" else 0
 
-    dependents = 3 if dependents == "3+" else int(dependents)
+    if dependents == "3+":
+        dependents = 3
+    else:
+        dependents = int(dependents)
 
     property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-    # ---------------- FEATURES (11 COLUMNS ONLY) ----------------
+    # ---------------- FEATURE VECTOR (11 FEATURES ONLY) ----------------
     features = np.array([[
         gender,
         married,
@@ -74,7 +77,7 @@ elif page == "Predict":
     # ---------------- SAFETY CHECK ----------------
     if features.shape[1] != model.n_features_in_:
         st.error(f"""
-❌ Feature mismatch!
+❌ Feature mismatch detected!
 
 Model expects: {model.n_features_in_}  
 You provided: {features.shape[1]}
@@ -88,7 +91,7 @@ You provided: {features.shape[1]}
 
         prediction = model.predict(features)[0]
 
-        # probability
+        # probability (if supported)
         if hasattr(model, "predict_proba"):
             prob = model.predict_proba(features)[0][1]
             st.success(f"Approval Probability: {round(prob * 100, 2)} %")
