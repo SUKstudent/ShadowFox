@@ -2,8 +2,8 @@ import streamlit as st
 import joblib
 import numpy as np
 
-# Load model
-model = joblib.load("loan_model.pkl")
+# Load model (FIXED PATH)
+model = joblib.load("Intermediate/Task 3/loan_model.pkl")
 
 st.title("🏦 Loan Approval Prediction App")
 
@@ -29,11 +29,14 @@ married = 1 if married == "Yes" else 0
 education = 1 if education == "Graduate" else 0
 self_employed = 1 if self_employed == "Yes" else 0
 
-dependents = 3 if dependents == "3+" else int(dependents)
+if dependents == "3+":
+    dependents = 3
+else:
+    dependents = int(dependents)
 
 property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-# Prediction button
+# Prediction
 if st.button("Predict Loan Status"):
     features = np.array([[gender, married, dependents, education,
                           self_employed, applicant_income,
