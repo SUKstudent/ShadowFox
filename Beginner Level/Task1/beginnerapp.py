@@ -1,214 +1,87 @@
-#python
-# ============================================
-# 📌 IMAGE CLASSIFICATION WEB APP (STREAMLIT)
-# ============================================
-
 import streamlit as st
 import numpy as np
-from PIL import Image
 import tensorflow as tf
-import requests
-from io import BytesIO
+from PIL import Image
 
-# ============================================
-# 🔧 PAGE CONFIGURATION
-# ============================================
-
-st.set_page_config(
-    page_title="AI Image Classifier",
-    page_icon="🤖",
-    layout="centered"
-)
-
-# ============================================
-# 🎨 CUSTOM STYLING
-# ============================================
-
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f5f7fa;
-    }
-    .title {
-        text-align: center;
-        font-size: 40px;
-        font-weight: bold;
-        color: #333;
-    }
-    .subtitle {
-        text-align: center;
-        font-size: 18px;
-        color: #555;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# ============================================
-# 🧠 LOAD MODEL (CACHED)
-# ============================================
-
+# ----------------------------
+# Load TFLite model (cached)
+# ----------------------------
 @st.cache_resource
 def load_model():
-    try:
-        model = tf.keras.models.load_model("Horses and Humans.h5")
-        return model
-    except Exception as e:
-        st.error("❌ Model not found. Make sure 'Horses and Humans.h5' is in repo.")
-        st.stop()
+    interpreter = tf.lite.Interpreter(model_path="model.tflite")
+    interpreter.allocate_tensors()
+    return interpreter
 
-model = load_model()
+interpreter = load_model()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
-# ============================================
-# 🏷️ CLASS LABELS
-# ============================================
+# ----------------------------
+# Sidebar Navigation
+# ----------------------------
+st.sidebar.title("🐎 Horse vs 🧑 Human App")
+page = st.sidebar.radio("Navigate", ["🏠 Home", "📤 Predict", "ℹ️ About"])
 
-CLASS_NAMES = ["horses", "humans"]
+# ----------------------------
+# HOME PAGE
+# ----------------------------
+if page == "🏠 Home":
+    st.title("Welcome 👋")
+    st.write("""
+    This is a deep learning app that classifies images as:
+    
+    - 🐎 Horse  
+    - 🧑 Human  
 
-# ============================================
-# 🖼️ IMAGE PREPROCESSING FUNCTION
-# ============================================
+    Upload an image in the Predict page to test the model.
+    """)
 
-def preprocess_image(img):
-    try:
-        img = img.convert("RGB")
-        img = img.resize((150, 150))
-        img_array = np.array(img) / 255.0
+    st.image("https://upload.wikimedia.org/wikipedia/commons/6/6e/Horse_and_rider.jpg", use_container_width=True)
+
+# ----------------------------
+# PREDICT PAGE
+# ----------------------------
+elif page == "📤 Predict":
+    st.title("Upload Image for Prediction")
+
+    file = st.file_uploader("Choose an image", type=["jpg", "png", "jpeg"])
+
+    if file:
+        img = Image.open(file).convert("RGB").resize((150, 150))
+        st.image(img, caption="Uploaded Image", use_container_width=True)
+
+        # preprocess
+        img_array = np.array(img, dtype=np.float32) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
-        return img_array
-    except Exception as e:
-        st.error("⚠️ Error processing image")
-        return None
 
-# ============================================
-# 🔍 PREDICTION FUNCTION
-# ============================================
+        # prediction
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+        interpreter.invoke()
 
-def predict_image(img_array):
-    try:
-        prediction = model.predict(img_array)
-        confidence = float(prediction[0][0])
+        output = interpreter.get_tensor(output_details[0]['index'])[0][0]
 
-        if confidence > 0.5:
-            label = CLASS_NAMES[1]
-            confidence_score = confidence
+        if output > 0.5:
+            st.success(f"Prediction: Human 🧑 ({output:.2f})")
         else:
-            label = CLASS_NAMES[0]
-            confidence_score = 1 - confidence
+            st.success(f"Prediction: Horse 🐎 ({1-output:.2f})")
 
-        return label, confidence_score
-    except Exception as e:
-        st.error("⚠️ Prediction failed")
-        return None, None
+# ----------------------------
+# ABOUT PAGE
+# ----------------------------
+elif page == "ℹ️ About":
+    st.title("About This Project")
 
-# ============================================
-# 🌐 LOAD IMAGE FROM URL
-# ============================================
+    st.write("""
+    This project is built using:
 
-def load_image_from_url(url):
-    try:
-        response = requests.get(url)
-        img = Image.open(BytesIO(response.content))
-        return img
-    except:
-        st.error("❌ Invalid image URL")
-        return None
+    - TensorFlow (CNN Model)
+    - TensorFlow Lite (for lightweight deployment)
+    - Streamlit (for web app)
+    - Dataset: horses_or_humans (TFDS)
 
-# ============================================
-# 🏠 UI HEADER
-# ============================================
-
-st.markdown('<div class="title">🤖 AI Image Classifier</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Classify images as Horses or Humans</div>', unsafe_allow_html=True)
-
-st.write("---")
-
-# ============================================
-# 📥 INPUT OPTIONS
-# ============================================
-
-option = st.radio(
-    "Choose Input Method:",
-    ["Upload Image", "Image URL"]
-)
-
-image = None
-
-# ============================================
-# 📤 FILE UPLOAD
-# ============================================
-
-if option == "Upload Image":
-    uploaded_file = st.file_uploader(
-        "Upload an image",
-        type=["jpg", "jpeg", "png"]
-    )
-
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-
-# ============================================
-# 🌐 URL INPUT
-# ============================================
-
-elif option == "Image URL":
-    url = st.text_input("Enter Image URL")
-
-    if url:
-        image = load_image_from_url(url)
-
-# ============================================
-# 🖼️ DISPLAY IMAGE
-# ============================================
-
-if image is not None:
-    st.image(image, caption="Selected Image", use_column_width=True)
-
-    st.write("---")
-
-    # ============================================
-    # 🔍 PREDICT BUTTON
-    # ============================================
-
-    if st.button("🔍 Predict"):
-        with st.spinner("Analyzing image..."):
-
-            img_array = preprocess_image(image)
-
-            if img_array is not None:
-                label, confidence = predict_image(img_array)
-
-                if label:
-                    st.success(f"✅ Prediction: {label.upper()}")
-                    st.info(f"📊 Confidence: {confidence * 100:.2f}%")
-
-# ============================================
-# 📊 SIDEBAR INFO
-# ============================================
-
-st.sidebar.header("ℹ️ About")
-
-st.sidebar.write("""
-This app uses a Deep Learning model built with TensorFlow.
-
-🔹 Model Type: CNN  
-🔹 Classes: Horses vs Humans  
-🔹 Input Size: 150x150  
-""")
-
-st.sidebar.write("---")
-
-st.sidebar.header("📌 Instructions")
-
-st.sidebar.write("""
-1. Upload an image OR paste URL  
-2. Click Predict  
-3. View results instantly  
-""")
-
-# ============================================
-# 🚨 ERROR HANDLING
-# ============================================
-
-st.write("---")
-
-st.caption("⚡ Built with Streamlit & TensorFlow")
+    ### Features:
+    ✔ Image Classification  
+    ✔ Deep Learning Model  
+    ✔ Lightweight TFLite deployment  
+    ✔ Simple UI with navigation  
+    """)
