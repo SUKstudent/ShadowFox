@@ -10,27 +10,51 @@ model = joblib.load(MODEL_PATH)
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Loan Prediction App", layout="centered")
 
+# ---------------- TITLE ----------------
 st.title("🏦 Loan Approval Prediction System")
 
-# ---------------- SIDEBAR ----------------
-page = st.sidebar.radio("Navigation", ["Predict", "About"])
+# ---------------- NAVIGATION ----------------
+page = st.sidebar.radio("Navigation", ["Home", "Predict", "About"])
 
-# ---------------- ABOUT PAGE ----------------
-if page == "About":
+# ================= HOME =================
+if page == "Home":
+    st.markdown("## 🏠 Welcome to Loan Prediction App")
     st.write("""
-    ### 🏦 Loan Prediction App
-    This app predicts whether a loan will be approved or rejected.
+    This application helps predict whether a loan will be approved or rejected
+    based on applicant details.
 
-    Built using:
-    - Streamlit
-    - Machine Learning (Sklearn)
-    - Python
+    👉 Navigate to **Predict** to check loan status  
+    👉 Go to **About** to know more about the project
     """)
 
-# ---------------- PREDICT PAGE ----------------
+    st.image("https://img.icons8.com/color/480/bank-building.png", width=200)
+
+# ================= ABOUT =================
+elif page == "About":
+    st.markdown("## ℹ️ About This App")
+
+    st.write("""
+    ### 🏦 Loan Prediction System
+
+    This machine learning app predicts loan approval status using:
+    - Applicant details
+    - Financial information
+    - Credit history
+
+    ### 🧠 Tech Stack:
+    - Python
+    - Streamlit
+    - Scikit-learn
+    - Joblib
+
+    ### 🎯 Goal:
+    Help banks automate loan approval decisions.
+    """)
+
+# ================= PREDICT =================
 elif page == "Predict":
 
-    st.subheader("Enter Applicant Details")
+    st.markdown("## 📊 Enter Applicant Details")
 
     # ---------------- INPUTS ----------------
     gender = st.selectbox("Gender", ["Male", "Female"])
@@ -59,7 +83,7 @@ elif page == "Predict":
 
     property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
-    # ---------------- FEATURE VECTOR (11 FEATURES ONLY) ----------------
+    # ---------------- FEATURES (11 ONLY) ----------------
     features = np.array([[
         gender,
         married,
@@ -74,15 +98,13 @@ elif page == "Predict":
         property_area
     ]])
 
-    # ---------------- SAFETY CHECK ----------------
+    # ---------------- CHECK ----------------
     if features.shape[1] != model.n_features_in_:
         st.error(f"""
-❌ Feature mismatch detected!
+❌ Feature mismatch!
 
 Model expects: {model.n_features_in_}  
 You provided: {features.shape[1]}
-
-👉 Fix: retrain model using same 11 features.
 """)
         st.stop()
 
@@ -91,12 +113,10 @@ You provided: {features.shape[1]}
 
         prediction = model.predict(features)[0]
 
-        # probability (if supported)
         if hasattr(model, "predict_proba"):
             prob = model.predict_proba(features)[0][1]
             st.success(f"Approval Probability: {round(prob * 100, 2)} %")
 
-        # result
         if prediction == 1:
             st.success("✅ Loan Approved")
         else:
