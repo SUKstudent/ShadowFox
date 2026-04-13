@@ -21,14 +21,18 @@ st.markdown("""
 st.sidebar.title("🧭 Navigation")
 option = st.sidebar.radio("Select Section", ["Dataset Overview", "Model Details", "Price Estimator"])
 
-# Get correct path (IMPORTANT for deployment)
+# Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Correct paths (IMPORTANT FIX)
+DATA_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car.csv")
+MODEL_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car_price_prediction_model.pkl")
+
 # Load dataset
-df = pd.read_csv(os.path.join(BASE_DIR, "car.csv"))
+df = pd.read_csv(DATA_PATH)
 
 # Load model
-model = joblib.load(os.path.join(BASE_DIR, "car_price_prediction_model.pkl"))
+model = joblib.load(MODEL_PATH)
 
 # Title
 st.title("🚗 Car Price Prediction App")
@@ -87,7 +91,7 @@ elif option == "Price Estimator":
     seller_type_individual = 1 if seller_type == "Individual" else 0
     transmission_manual = 1 if transmission == "Manual" else 0
 
-    # Input format (must match training)
+    # Input format
     input_data = np.array([[year, present_price, kms_driven,
                             fuel_type_diesel,
                             seller_type_individual,
