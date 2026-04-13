@@ -7,7 +7,7 @@ import os
 # Page config
 st.set_page_config(page_title="Car Price Prediction", layout="wide")
 
-# Custom dark theme
+# Dark theme styling
 st.markdown("""
     <style>
     .stApp {
@@ -17,11 +17,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar (renamed for originality)
+# Sidebar
 st.sidebar.title("🧭 Navigation")
 option = st.sidebar.radio("Select Section", ["Dataset Overview", "Model Details", "Price Estimator"])
 
-# Get current directory (fix for deployment)
+# Get correct path (IMPORTANT for deployment)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load dataset
@@ -34,7 +34,7 @@ model = joblib.load(os.path.join(BASE_DIR, "car_price_prediction_model.pkl"))
 st.title("🚗 Car Price Prediction App")
 st.caption("Estimate car resale value using Machine Learning")
 
-# ===================== DATASET =====================
+# ================= DATASET =================
 if option == "Dataset Overview":
     st.subheader("📊 Dataset Snapshot")
     st.dataframe(df)
@@ -44,7 +44,7 @@ if option == "Dataset Overview":
     st.subheader("📈 Statistical Summary")
     st.write(df.describe())
 
-# ===================== MODEL =====================
+# ================= MODEL =================
 elif option == "Model Details":
     st.subheader("🤖 About the Model")
 
@@ -66,7 +66,7 @@ elif option == "Model Details":
     - Transmission  
     """)
 
-# ===================== PREDICTION =====================
+# ================= PREDICTION =================
 elif option == "Price Estimator":
     st.subheader("🔮 Predict Car Price")
 
@@ -87,7 +87,7 @@ elif option == "Price Estimator":
     seller_type_individual = 1 if seller_type == "Individual" else 0
     transmission_manual = 1 if transmission == "Manual" else 0
 
-    # Input format
+    # Input format (must match training)
     input_data = np.array([[year, present_price, kms_driven,
                             fuel_type_diesel,
                             seller_type_individual,
