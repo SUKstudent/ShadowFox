@@ -24,7 +24,7 @@ option = st.sidebar.radio("Choose Action", ["View Data", "Model Info", "Predict 
 df = pd.read_csv("car.csv")
 
 # Load model
-model = joblib.load("car_selling_price_prediction_analysis_model.pkl")
+model = joblib.load("car_price_prediction_model.pkl")
 
 # Title
 st.title("🚗 Car Price Prediction App")
