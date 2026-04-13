@@ -4,10 +4,10 @@ import numpy as np
 import joblib
 import os
 
-# ================= CONFIG =================
+# Page config
 st.set_page_config(page_title="Car Price Prediction", layout="wide")
 
-# Dark theme
+# Dark theme styling
 st.markdown("""
     <style>
     .stApp {
@@ -17,40 +17,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ================= SIDEBAR =================
+# Sidebar
 st.sidebar.title("🧭 Navigation")
-option = st.sidebar.radio("Select Section", 
-                          ["Dataset Overview", "Model Details", "Price Estimator"])
+option = st.sidebar.radio("Select Section", ["Dataset Overview", "Model Details", "Price Estimator"])
 
-# ================= PATHS =================
+# Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATA_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car_cleaned.csv")
+# Correct paths
+DATA_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car_price_prediction_model.pkl")
 
-# ================= LOAD DATA =================
-@st.cache_data
-def load_data():
-    return pd.read_csv(DATA_PATH)
+# Load dataset
+df = pd.read_csv(DATA_PATH)
 
-@st.cache_resource
-def load_model():
-    return joblib.load(MODEL_PATH)
+# Load model
+model = joblib.load(MODEL_PATH)
 
-df = load_data()
-model = load_model()
-
-# ================= TITLE =================
+# Title
 st.title("🚗 Car Price Prediction App")
 st.caption("Estimate car resale value using Machine Learning")
 
 # ================= DATASET =================
 if option == "Dataset Overview":
-    st.subheader("📊 Cleaned Dataset")
-    st.success("✅ Dataset cleaned (duplicates removed before training)")
-    
-    st.write(f"Shape: {df.shape}")
+    st.subheader("📊 Dataset Snapshot")
     st.dataframe(df)
+
+    st.markdown("---")
+
+    st.subheader("📈 Statistical Summary")
+    st.write(df.describe())
 
 # ================= MODEL =================
 elif option == "Model Details":
@@ -74,22 +70,6 @@ elif option == "Model Details":
     - Transmission  
     """)
 
-    # Feature importance (bonus)
-    try:
-        importance = model.coef_
-        features = ["Year", "Present Price", "Kms Driven",
-                    "Diesel", "Petrol", "Seller", "Manual"]
-
-        imp_df = pd.DataFrame({
-            "Feature": features,
-            "Importance": importance
-        })
-
-        st.subheader("📊 Feature Importance")
-        st.bar_chart(imp_df.set_index("Feature"))
-    except:
-        st.info("Feature importance not available.")
-
 # ================= PREDICTION =================
 elif option == "Price Estimator":
     st.subheader("🔮 Predict Car Price")
@@ -106,13 +86,13 @@ elif option == "Price Estimator":
         seller_type = st.selectbox("Seller Type", ["Dealer", "Individual"])
         transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
 
-    # Encoding
+    # Correct encoding (matches training)
     fuel_type_diesel = 1 if fuel_type == "Diesel" else 0
     fuel_type_petrol = 1 if fuel_type == "Petrol" else 0
     seller_type_individual = 1 if seller_type == "Individual" else 0
     transmission_manual = 1 if transmission == "Manual" else 0
 
-    # Input
+    # FINAL input format (matches model)
     input_data = np.array([[year, present_price, kms_driven,
                             fuel_type_diesel,
                             fuel_type_petrol,
@@ -120,26 +100,5 @@ elif option == "Price Estimator":
                             transmission_manual]])
 
     if st.button("Predict Price"):
-        prediction = model.predict(input_data)[0]
-
-        st.success(f"💰 Estimated Price: ₹ {round(prediction, 2)} lakhs")
-
-        # Smart suggestion
-        if prediction < present_price * 0.5:
-            st.warning("⚠️ High depreciation detected. Consider selling soon.")
-        else:
-            st.success("✅ Good resale value!")
-
-        # Download result
-        result_df = pd.DataFrame({
-            "Year": [year],
-            "Predicted Price (Lakhs)": [prediction]
-        })
-
-        st.download_button("📥 Download Result",
-                           result_df.to_csv(index=False),
-                           "prediction.csv")
-
-# ================= FOOTER =================
-st.markdown("---")
-st.caption("Built with ❤️ using Streamlit | Internship Project")
+        prediction = model.predict(input_data)
+        st.success(f"💰 Estimated Price: ₹ {round(prediction[0], 2)} lakhs") just remove that Statistical Summary
