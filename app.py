@@ -24,7 +24,7 @@ option = st.sidebar.radio("Select Section", ["Dataset Overview", "Model Details"
 # Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Correct paths (IMPORTANT FIX)
+# Correct paths
 DATA_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "Intermediate", "Task_2", "car_price_prediction_model.pkl")
 
@@ -86,14 +86,16 @@ elif option == "Price Estimator":
         seller_type = st.selectbox("Seller Type", ["Dealer", "Individual"])
         transmission = st.selectbox("Transmission", ["Manual", "Automatic"])
 
-    # Encoding
+    # Correct encoding (matches training)
     fuel_type_diesel = 1 if fuel_type == "Diesel" else 0
+    fuel_type_petrol = 1 if fuel_type == "Petrol" else 0
     seller_type_individual = 1 if seller_type == "Individual" else 0
     transmission_manual = 1 if transmission == "Manual" else 0
 
-    # Input format
+    # FINAL input format (matches model)
     input_data = np.array([[year, present_price, kms_driven,
                             fuel_type_diesel,
+                            fuel_type_petrol,
                             seller_type_individual,
                             transmission_manual]])
 
