@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import os
 
 # Page config
 st.set_page_config(page_title="Car Price Prediction", layout="wide")
@@ -16,33 +17,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
-st.sidebar.title("⚙️ Controls")
-option = st.sidebar.radio("Choose Action", ["View Data", "Model Info", "Predict Price"])
+# Sidebar (renamed for originality)
+st.sidebar.title("🧭 Navigation")
+option = st.sidebar.radio("Select Section", ["Dataset Overview", "Model Details", "Price Estimator"])
+
+# Get current directory (fix for deployment)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load dataset
-df = pd.read_csv("car.csv")
+df = pd.read_csv(os.path.join(BASE_DIR, "car.csv"))
 
 # Load model
-model = joblib.load("car_price_prediction_model.pkl")
+model = joblib.load(os.path.join(BASE_DIR, "car_price_prediction_model.pkl"))
 
 # Title
 st.title("🚗 Car Price Prediction App")
 st.caption("Estimate car resale value using Machine Learning")
 
-# VIEW DATA
-if option == "View Data":
-    st.subheader("📊 Dataset Preview")
+# ===================== DATASET =====================
+if option == "Dataset Overview":
+    st.subheader("📊 Dataset Snapshot")
     st.dataframe(df)
 
     st.markdown("---")
 
-    st.subheader("📈 Dataset Statistics")
+    st.subheader("📈 Statistical Summary")
     st.write(df.describe())
 
-# MODEL INFO
-elif option == "Model Info":
-    st.subheader("🤖 Model Information")
+# ===================== MODEL =====================
+elif option == "Model Details":
+    st.subheader("🤖 About the Model")
 
     st.write("""
     - Model Used: Linear Regression  
@@ -62,9 +66,9 @@ elif option == "Model Info":
     - Transmission  
     """)
 
-# PREDICTION
-elif option == "Predict Price":
-    st.subheader("🔮 Enter Car Details")
+# ===================== PREDICTION =====================
+elif option == "Price Estimator":
+    st.subheader("🔮 Predict Car Price")
 
     col1, col2 = st.columns(2)
 
