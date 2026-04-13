@@ -101,4 +101,4 @@ elif option == "Price Estimator":
 
     if st.button("Predict Price"):
         prediction = model.predict(input_data)
-        st.success(f"💰 Estimated Price: ₹ {round(prediction[0], 2)} lakhs") just remove that Statistical Summary
+        st.success(f"💰 Estimated Price: ₹ {round(prediction[0], 2)} lakhs") 
